@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENA Assist — Registrar asistencia</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body style="background: linear-gradient(160deg, var(--carbon) 0%, #253028 55%, var(--verde-sena-oscuro) 100%); min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 20px;">
+
+<div class="tarjeta" style="max-width: 400px; width: 100%;">
+  <div class="marca" style="margin-bottom: 18px;">
+    <div class="isotipo">SA</div>
+    <div class="nombre">SENA <span>Assist</span></div>
+  </div>
+
+  <div id="vista-formulario">
+    <span class="eyebrow">Registro de asistencia</span>
+    <h2>Confirma tu documento</h2>
+    <p class="texto-tenue">Escaneaste el código QR de tu clase. Ingresa tu número de documento para registrar tu llegada.</p>
+
+    <div id="aviso" class="aviso aviso-error oculto"></div>
+
+    <form id="form-scan" class="mt-16">
+      <label for="documento">Número de documento</label>
+      <input type="text" id="documento" inputmode="numeric" placeholder="Ej: 1000000004" required>
+      <button type="submit" class="btn btn-primario btn-bloque" id="btn-scan">Registrar mi asistencia</button>
+    </form>
+  </div>
+
+  <div id="vista-exito" class="oculto centro">
+    <div style="font-size:52px;">✅</div>
+    <h2 id="titulo-exito">¡Asistencia registrada!</h2>
+    <p class="texto-tenue" id="detalle-exito"></p>
+  </div>
+
+  <div id="vista-error-qr" class="oculto centro">
+    <div style="font-size:52px;">⚠️</div>
+    <h2>No se pudo registrar</h2>
+    <p class="texto-tenue" id="detalle-error"></p>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+
+if (!token) {
+  document.getElementById('vista-formulario').classList.add('oculto');
+  document.getElementById('vista-error-qr').classList.remove('oculto');
+  document.getElementById('detalle-error').textContent = 'El enlace no contiene un código QR válido. Pide a tu instructor que lo vuelva a mostrar.';
+}
+
+document.getElementById('form-scan').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-scan');
+  const documento = document.getElementById('documento').value.trim();
+
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+
+  try {
+    const datos = await apiFetch('/asistencia/escanear', {
+      method: 'POST',
+      body: JSON.stringify({ token, numero_documento: documento })
+    });
+
+    document.getElementById('vista-formulario').classList.add('oculto');
+    document.getElementById('vista-exito').classList.remove('oculto');
+
+    if (datos.duplicado) {
+      document.getElementById('titulo-exito').textContent = 'Ya estabas registrado';
+      document.getElementById('detalle-exito').textContent = datos.mensaje;
+    } else {
+      const r = datos.registro;
+      document.getElementById('detalle-exito').textContent =
+        `${r.nombres} ${r.apellidos} — ${r.nombre_clase} — ${r.hora_registro.slice(0,5)}`;
+    }
+  } catch (err) {
+    mostrarAviso('aviso', err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Registrar mi asistencia';
+  }
+});
+</script>
+</body>
+</html>

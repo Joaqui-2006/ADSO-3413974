@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENA Assist — Panel administrativo</title>
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  .layout-admin { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 65px); }
+  .lateral { background: var(--blanco); border-right: 1px solid var(--gris-borde); padding: 20px 12px; }
+  .lateral button {
+    display: block; width: 100%; text-align: left; padding: 10px 14px; border-radius: 8px;
+    border: none; background: transparent; font-family: var(--fuente-texto); font-size: 14px;
+    font-weight: 600; color: var(--gris-texto); cursor: pointer; margin-bottom: 2px;
+  }
+  .lateral button.activo { background: var(--verde-sena-claro); color: var(--verde-sena-oscuro); }
+  .panel-principal { padding: 28px 32px; }
+  @media (max-width: 760px) { .layout-admin { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="marca">
+    <div class="isotipo">SA</div>
+    <div class="nombre">SENA <span>Assist</span></div>
+  </div>
+  <div class="flex gap-16">
+    <span class="badge badge-justificado">Panel administrativo</span>
+    <button class="btn btn-fantasma" onclick="Sesion.cerrar()">Salir</button>
+  </div>
+</header>
+
+<div class="layout-admin">
+  <aside class="lateral" id="menu-lateral">
+    <!-- generado por JS -->
+  </aside>
+
+  <main class="panel-principal">
+    <div class="flex-entre">
+      <div>
+        <span class="eyebrow" id="titulo-eyebrow">Gestión</span>
+        <h1 id="titulo-entidad">Instructores</h1>
+      </div>
+      <button class="btn btn-primario" id="btn-nuevo">+ Nuevo</button>
+    </div>
+
+    <input type="text" id="buscador-admin" placeholder="Buscar..." class="mt-16" style="max-width:320px;">
+
+    <div class="tarjeta mt-16" style="overflow-x:auto;">
+      <table id="tabla-admin">
+        <thead id="encabezado-tabla"></thead>
+        <tbody id="cuerpo-tabla"><tr><td>Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Modal genérico de creación/edición -->
+<div id="modal" class="oculto" style="position:fixed; inset:0; background:rgba(28,35,33,.5); display:flex; align-items:center; justify-content:center; z-index:50;">
+  <div class="tarjeta" style="width:420px; max-height:85vh; overflow-y:auto;">
+    <h3 id="modal-titulo">Nuevo registro</h3>
+    <form id="form-modal"></form>
+    <div class="flex gap-8 mt-16">
+      <button class="btn btn-fantasma btn-bloque" id="btn-cancelar" type="button">Cancelar</button>
+      <button class="btn btn-primario btn-bloque" id="btn-guardar" type="submit" form="form-modal">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
