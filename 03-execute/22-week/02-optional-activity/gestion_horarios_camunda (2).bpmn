@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_GestionHorarios" targetNamespace="http://sena.local/gestion-horarios" exporter="Camunda Modeler" exporterVersion="5.49.0">
+  <bpmn:collaboration id="Collaboration_GestionHorarios">
+    <bpmn:participant id="Participant_Coordinador" name="Coordinador académico" processRef="Process_Coordinador" />
+    <bpmn:participant id="Participant_Instructor" name="Instructor" processRef="Process_Instructor" />
+    <bpmn:messageFlow id="Message_HorarioPublicado" name="Horario publicado" sourceRef="Task_PublicarHorario" targetRef="Start_HorarioPublicado" />
+    <bpmn:messageFlow id="Message_SolicitudSeguimiento" name="Solicitud de seguimiento" sourceRef="Task_SolicitarSeguimiento" targetRef="Catch_SolicitudSeguimiento" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Coordinador" name="Gestión del horario" isExecutable="false">
+    <bpmn:startEvent id="Start_Gestion" name="Iniciar gestión">
+      <bpmn:outgoing>F1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_CrearEditar" name="Crear o editar horario">
+      <bpmn:incoming>F1</bpmn:incoming>
+      <bpmn:outgoing>F2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_RevisarConflictos" name="Revisar conflictos">
+      <bpmn:incoming>F2</bpmn:incoming>
+      <bpmn:incoming>F4_LOOP</bpmn:incoming>
+      <bpmn:outgoing>F3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_Conflictos" name="¿Existen conflictos?">
+      <bpmn:incoming>F3</bpmn:incoming>
+      <bpmn:outgoing>F4_SI</bpmn:outgoing>
+      <bpmn:outgoing>F4_NO</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_CorregirConflictos" name="Corregir conflictos">
+      <bpmn:incoming>F4_SI</bpmn:incoming>
+      <bpmn:outgoing>F4_LOOP</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_AgregarSesion" name="Agregar sesión">
+      <bpmn:incoming>F4_NO</bpmn:incoming>
+      <bpmn:incoming>F6_SI</bpmn:incoming>
+      <bpmn:outgoing>F5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_OtraSesion" name="¿Hay otra sesión?">
+      <bpmn:incoming>F5</bpmn:incoming>
+      <bpmn:outgoing>F6_SI</bpmn:outgoing>
+      <bpmn:outgoing>F6_NO</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_ValidarHorario" name="Validar horario">
+      <bpmn:incoming>F6_NO</bpmn:incoming>
+      <bpmn:incoming>F8_LOOP</bpmn:incoming>
+      <bpmn:outgoing>F7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_HorarioValido" name="¿Horario válido?">
+      <bpmn:incoming>F7</bpmn:incoming>
+      <bpmn:outgoing>F8_SI</bpmn:outgoing>
+      <bpmn:outgoing>F8_NO</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_CorregirDatos" name="Corregir datos del horario">
+      <bpmn:incoming>F8_NO</bpmn:incoming>
+      <bpmn:outgoing>F8_LOOP</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_PublicarHorario" name="Publicar horario">
+      <bpmn:incoming>F8_SI</bpmn:incoming>
+      <bpmn:outgoing>F9</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:intermediateCatchEvent id="Catch_SolicitudSeguimiento" name="Esperar solicitud de seguimiento">
+      <bpmn:incoming>F9</bpmn:incoming>
+      <bpmn:outgoing>F10</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_Seguimiento" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="Task_RegistrarSeguimiento" name="Registrar seguimiento">
+      <bpmn:incoming>F10</bpmn:incoming>
+      <bpmn:incoming>F13_LOOP</bpmn:incoming>
+      <bpmn:outgoing>F11</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_DatosValidos" name="¿Datos válidos?">
+      <bpmn:incoming>F11</bpmn:incoming>
+      <bpmn:outgoing>F12_SI</bpmn:outgoing>
+      <bpmn:outgoing>F12_NO</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_CorregirSeguimiento" name="Corregir seguimiento">
+      <bpmn:incoming>F12_NO</bpmn:incoming>
+      <bpmn:outgoing>F13_LOOP</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="End_Seguimiento" name="Seguimiento registrado">
+      <bpmn:incoming>F12_SI</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="F1" sourceRef="Start_Gestion" targetRef="Task_CrearEditar" />
+    <bpmn:sequenceFlow id="F2" sourceRef="Task_CrearEditar" targetRef="Task_RevisarConflictos" />
+    <bpmn:sequenceFlow id="F4_LOOP" sourceRef="Task_CorregirConflictos" targetRef="Task_RevisarConflictos" />
+    <bpmn:sequenceFlow id="F3" sourceRef="Task_RevisarConflictos" targetRef="Gateway_Conflictos" />
+    <bpmn:sequenceFlow id="F4_SI" name="Sí" sourceRef="Gateway_Conflictos" targetRef="Task_CorregirConflictos" />
+    <bpmn:sequenceFlow id="F4_NO" name="No" sourceRef="Gateway_Conflictos" targetRef="Task_AgregarSesion" />
+    <bpmn:sequenceFlow id="F6_SI" name="Sí" sourceRef="Gateway_OtraSesion" targetRef="Task_AgregarSesion" />
+    <bpmn:sequenceFlow id="F5" sourceRef="Task_AgregarSesion" targetRef="Gateway_OtraSesion" />
+    <bpmn:sequenceFlow id="F6_NO" name="No" sourceRef="Gateway_OtraSesion" targetRef="Task_ValidarHorario" />
+    <bpmn:sequenceFlow id="F8_LOOP" sourceRef="Task_CorregirDatos" targetRef="Task_ValidarHorario" />
+    <bpmn:sequenceFlow id="F7" sourceRef="Task_ValidarHorario" targetRef="Gateway_HorarioValido" />
+    <bpmn:sequenceFlow id="F8_NO" name="No" sourceRef="Gateway_HorarioValido" targetRef="Task_CorregirDatos" />
+    <bpmn:sequenceFlow id="F8_SI" name="Sí" sourceRef="Gateway_HorarioValido" targetRef="Task_PublicarHorario" />
+    <bpmn:sequenceFlow id="F9" sourceRef="Task_PublicarHorario" targetRef="Catch_SolicitudSeguimiento" />
+    <bpmn:sequenceFlow id="F10" sourceRef="Catch_SolicitudSeguimiento" targetRef="Task_RegistrarSeguimiento" />
+    <bpmn:sequenceFlow id="F13_LOOP" sourceRef="Task_CorregirSeguimiento" targetRef="Task_RegistrarSeguimiento" />
+    <bpmn:sequenceFlow id="F11" sourceRef="Task_RegistrarSeguimiento" targetRef="Gateway_DatosValidos" />
+    <bpmn:sequenceFlow id="F12_NO" name="No" sourceRef="Gateway_DatosValidos" targetRef="Task_CorregirSeguimiento" />
+    <bpmn:sequenceFlow id="F12_SI" name="Sí" sourceRef="Gateway_DatosValidos" targetRef="End_Seguimiento" />
+  </bpmn:process>
+  <bpmn:process id="Process_Instructor" name="Consulta y seguimiento del instructor" isExecutable="false">
+    <bpmn:startEvent id="Start_HorarioPublicado" name="Horario publicado">
+      <bpmn:outgoing>I1</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_Horario" />
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_ConsultarHorario" name="Consultar horario">
+      <bpmn:incoming>I1</bpmn:incoming>
+      <bpmn:outgoing>I2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_RegistrarAsistencia" name="Registrar asistencia y avance">
+      <bpmn:incoming>I2</bpmn:incoming>
+      <bpmn:outgoing>I3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_RequiereSeguimiento" name="¿Requiere seguimiento?">
+      <bpmn:incoming>I3</bpmn:incoming>
+      <bpmn:outgoing>I4_SI</bpmn:outgoing>
+      <bpmn:outgoing>I4_NO</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_SolicitarSeguimiento" name="Solicitar seguimiento">
+      <bpmn:incoming>I4_SI</bpmn:incoming>
+      <bpmn:outgoing>I5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="End_Solicitud" name="Solicitud enviada">
+      <bpmn:incoming>I5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_Registro" name="Registro completo">
+      <bpmn:incoming>I4_NO</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="I1" sourceRef="Start_HorarioPublicado" targetRef="Task_ConsultarHorario" />
+    <bpmn:sequenceFlow id="I2" sourceRef="Task_ConsultarHorario" targetRef="Task_RegistrarAsistencia" />
+    <bpmn:sequenceFlow id="I3" sourceRef="Task_RegistrarAsistencia" targetRef="Gateway_RequiereSeguimiento" />
+    <bpmn:sequenceFlow id="I4_SI" name="Sí" sourceRef="Gateway_RequiereSeguimiento" targetRef="Task_SolicitarSeguimiento" />
+    <bpmn:sequenceFlow id="I4_NO" name="No" sourceRef="Gateway_RequiereSeguimiento" targetRef="End_Registro" />
+    <bpmn:sequenceFlow id="I5" sourceRef="Task_SolicitarSeguimiento" targetRef="End_Solicitud" />
+  </bpmn:process>
+  <bpmn:message id="Message_Horario" name="Horario publicado" />
+  <bpmn:message id="Message_Seguimiento" name="Solicitud de seguimiento" />
+  <bpmndi:BPMNDiagram id="Diagram_GestionHorarios">
+    <bpmndi:BPMNPlane id="Plane_GestionHorarios" bpmnElement="Collaboration_GestionHorarios">
+      <bpmndi:BPMNShape id="Participant_Coordinador_di" bpmnElement="Participant_Coordinador" isHorizontal="true">
+        <dc:Bounds x="160" y="40" width="1780" height="560" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Gestion_di" bpmnElement="Start_Gestion">
+        <dc:Bounds x="210" y="275" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="194" y="311" width="68" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CrearEditar_di" bpmnElement="Task_CrearEditar">
+        <dc:Bounds x="270" y="250" width="170" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RevisarConflictos_di" bpmnElement="Task_RevisarConflictos">
+        <dc:Bounds x="475" y="250" width="170" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Conflictos_di" bpmnElement="Gateway_Conflictos" isMarkerVisible="true">
+        <dc:Bounds x="680" y="270" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="679" y="320" width="52" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CorregirConflictos_di" bpmnElement="Task_CorregirConflictos">
+        <dc:Bounds x="645" y="110" width="170" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AgregarSesion_di" bpmnElement="Task_AgregarSesion">
+        <dc:Bounds x="770" y="250" width="160" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_OtraSesion_di" bpmnElement="Gateway_OtraSesion" isMarkerVisible="true">
+        <dc:Bounds x="970" y="270" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="950" y="320" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ValidarHorario_di" bpmnElement="Task_ValidarHorario">
+        <dc:Bounds x="1055" y="250" width="160" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_HorarioValido_di" bpmnElement="Gateway_HorarioValido" isMarkerVisible="true">
+        <dc:Bounds x="1255" y="270" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1240" y="320" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CorregirDatos_di" bpmnElement="Task_CorregirDatos">
+        <dc:Bounds x="1200" y="110" width="190" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PublicarHorario_di" bpmnElement="Task_PublicarHorario">
+        <dc:Bounds x="1345" y="250" width="160" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Catch_SolicitudSeguimiento_di" bpmnElement="Catch_SolicitudSeguimiento">
+        <dc:Bounds x="1690" y="455" width="45" height="45" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1672" y="500" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RegistrarSeguimiento_di" bpmnElement="Task_RegistrarSeguimiento">
+        <dc:Bounds x="1400" y="420" width="180" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_DatosValidos_di" bpmnElement="Gateway_DatosValidos" isMarkerVisible="true">
+        <dc:Bounds x="1310" y="440" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1295" y="416" width="79" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CorregirSeguimiento_di" bpmnElement="Task_CorregirSeguimiento">
+        <dc:Bounds x="1085" y="420" width="180" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Seguimiento_di" bpmnElement="End_Seguimiento">
+        <dc:Bounds x="995" y="447" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="959" y="409.5" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
+        <di:waypoint x="246" y="293" />
+        <di:waypoint x="270" y="293" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F2_di" bpmnElement="F2">
+        <di:waypoint x="440" y="295" />
+        <di:waypoint x="475" y="295" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F3_di" bpmnElement="F3">
+        <di:waypoint x="645" y="295" />
+        <di:waypoint x="680" y="295" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_SI_di" bpmnElement="F4_SI">
+        <di:waypoint x="705" y="270" />
+        <di:waypoint x="705" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="715" y="225" width="11" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_LOOP_di" bpmnElement="F4_LOOP">
+        <di:waypoint x="645" y="155" />
+        <di:waypoint x="560" y="155" />
+        <di:waypoint x="560" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_NO_di" bpmnElement="F4_NO">
+        <di:waypoint x="730" y="295" />
+        <di:waypoint x="770" y="295" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="743" y="270" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F5_di" bpmnElement="F5">
+        <di:waypoint x="930" y="295" />
+        <di:waypoint x="970" y="295" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F6_SI_di" bpmnElement="F6_SI">
+        <di:waypoint x="995" y="270" />
+        <di:waypoint x="995" y="210" />
+        <di:waypoint x="850" y="210" />
+        <di:waypoint x="850" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="917" y="185" width="11" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F6_NO_di" bpmnElement="F6_NO">
+        <di:waypoint x="1020" y="295" />
+        <di:waypoint x="1055" y="295" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1030" y="270" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7">
+        <di:waypoint x="1215" y="295" />
+        <di:waypoint x="1255" y="295" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_NO_di" bpmnElement="F8_NO">
+        <di:waypoint x="1280" y="270" />
+        <di:waypoint x="1280" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1288" y="225" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_LOOP_di" bpmnElement="F8_LOOP">
+        <di:waypoint x="1200" y="155" />
+        <di:waypoint x="1135" y="155" />
+        <di:waypoint x="1135" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_SI_di" bpmnElement="F8_SI">
+        <di:waypoint x="1305" y="295" />
+        <di:waypoint x="1345" y="295" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1320" y="270" width="11" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F9_di" bpmnElement="F9">
+        <di:waypoint x="1505" y="295" />
+        <di:waypoint x="1712" y="455" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="1690" y="478" />
+        <di:waypoint x="1580" y="465" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
+        <di:waypoint x="1400" y="465" />
+        <di:waypoint x="1360" y="465" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_NO_di" bpmnElement="F12_NO">
+        <di:waypoint x="1310" y="465" />
+        <di:waypoint x="1265" y="465" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1280" y="440" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_LOOP_di" bpmnElement="F13_LOOP">
+        <di:waypoint x="1085" y="465" />
+        <di:waypoint x="1040" y="465" />
+        <di:waypoint x="1040" y="395" />
+        <di:waypoint x="1490" y="395" />
+        <di:waypoint x="1490" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_SI_di" bpmnElement="F12_SI">
+        <di:waypoint x="1335" y="490" />
+        <di:waypoint x="1335" y="530" />
+        <di:waypoint x="1013" y="530" />
+        <di:waypoint x="1013" y="483" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1169" y="505" width="11" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Instructor_di" bpmnElement="Participant_Instructor" isHorizontal="true">
+        <dc:Bounds x="160" y="660" width="1780" height="260" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_HorarioPublicado_di" bpmnElement="Start_HorarioPublicado">
+        <dc:Bounds x="230" y="750" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="205" y="786" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ConsultarHorario_di" bpmnElement="Task_ConsultarHorario">
+        <dc:Bounds x="300" y="720" width="170" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RegistrarAsistencia_di" bpmnElement="Task_RegistrarAsistencia">
+        <dc:Bounds x="510" y="720" width="190" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_RequiereSeguimiento_di" bpmnElement="Gateway_RequiereSeguimiento" isMarkerVisible="true">
+        <dc:Bounds x="745" y="740" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="737" y="790" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SolicitarSeguimiento_di" bpmnElement="Task_SolicitarSeguimiento">
+        <dc:Bounds x="840" y="720" width="180" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Solicitud_di" bpmnElement="End_Solicitud">
+        <dc:Bounds x="1070" y="747" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1046" y="783" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Registro_di" bpmnElement="End_Registro">
+        <dc:Bounds x="840" y="845" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="814" y="881" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="I1_di" bpmnElement="I1">
+        <di:waypoint x="266" y="768" />
+        <di:waypoint x="300" y="765" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="I2_di" bpmnElement="I2">
+        <di:waypoint x="470" y="765" />
+        <di:waypoint x="510" y="765" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="I3_di" bpmnElement="I3">
+        <di:waypoint x="700" y="765" />
+        <di:waypoint x="745" y="765" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="I4_SI_di" bpmnElement="I4_SI">
+        <di:waypoint x="795" y="765" />
+        <di:waypoint x="840" y="765" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="812" y="740" width="11" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="I4_NO_di" bpmnElement="I4_NO">
+        <di:waypoint x="770" y="790" />
+        <di:waypoint x="770" y="863" />
+        <di:waypoint x="840" y="863" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="778" y="817" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="I5_di" bpmnElement="I5">
+        <di:waypoint x="1020" y="765" />
+        <di:waypoint x="1070" y="765" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Message_HorarioPublicado_di" bpmnElement="Message_HorarioPublicado">
+        <di:waypoint x="1425" y="340" />
+        <di:waypoint x="1425" y="635" />
+        <di:waypoint x="248" y="635" />
+        <di:waypoint x="248" y="750" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="793" y="610" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Message_SolicitudSeguimiento_di" bpmnElement="Message_SolicitudSeguimiento">
+        <di:waypoint x="930" y="720" />
+        <di:waypoint x="930" y="625" />
+        <di:waypoint x="1712" y="625" />
+        <di:waypoint x="1712" y="455" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1291" y="600" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
